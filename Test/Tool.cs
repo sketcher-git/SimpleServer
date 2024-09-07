@@ -12,7 +12,7 @@ internal static class Tool
     public const int ProtocolIdSize = 2;
     private static readonly Random _random = new Random(DateTime.UtcNow.Millisecond);
 
-    private const string _onnectionString = "Data Source=G:/Workplace/SimpleServer/SqliteDB/Game.db;";
+    private const string _onnectionString = "Data Source=../../../../SqliteDB/Game.db;";
 
     private static readonly List<Guid> _playerIdList = new List<Guid>();
 
