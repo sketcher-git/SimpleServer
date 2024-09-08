@@ -14,6 +14,7 @@ internal sealed class ChatNotificationHandler(IServiceApi api)
         var response = new ChatNotificationProtocol
         {
             SenderId = notification.SenderId,
+            Channel = notification.Channel,
             Content = notification.Content,
             SendingTime = notification.SendingTime
         };
@@ -24,7 +25,7 @@ internal sealed class ChatNotificationHandler(IServiceApi api)
         {
             var player = OnlineCacheController.Instance.GetPlayerOnlineCacheByPlayerId(notification.TargetId);
             if (player != null)
-                api.Send(notification.TargetId, (short)ProtocolId.Chat, response);
+                api.Send(notification.TargetId, (short)response.ProtocolId, response);
         }
 
         return Task.CompletedTask;
