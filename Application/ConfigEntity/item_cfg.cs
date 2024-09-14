@@ -2,7 +2,7 @@
 
 namespace Application.ConfigEntity;
 
-internal record item_cfg : IDataEntity
+internal sealed record item_cfg : IDataEntity
 {
     public int id { get; init; }
     public string? name { get; init; }

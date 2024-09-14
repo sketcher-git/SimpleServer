@@ -2,7 +2,7 @@
 
 namespace Application.ConfigEntity;
 
-internal record player_init_cfg : IDataEntity
+internal sealed record player_init_cfg : IDataEntity
 {
     public int id { get; init; }
     public int gold { get; init; }
