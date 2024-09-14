@@ -2,6 +2,8 @@
 
 **SimpleServer** is a server application that leverages modern technologies to provide a robust and scalable solution. It utilizes CQRS (Command Query Responsibility Segregation), MessagePack for efficient serialization, NetCoreServer for networking, and SQLite for data storage.
 
+In addition to these technical capabilities, SimpleServer is dedicated to lowering the barriers to game design by offering a streamlined and efficient backend infrastructure, enabling developers to focus more on creative aspects of game development without being overwhelmed by complex server management.
+
 ## Features
 
 - **CQRS**: Separates the read and write operations to enhance performance and scalability.
