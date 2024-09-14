@@ -2,5 +2,5 @@
 
 public interface IDataEntity
 {
-    int id { get; set; }
+    int id { get; init; }
 }

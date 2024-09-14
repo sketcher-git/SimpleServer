@@ -4,7 +4,7 @@ namespace Application.ConfigEntity;
 
 internal class player_init_cfg : IDataEntity
 {
-    public int id { get; set; }
-    public int gold { get; set; }
-    public string? items { get; set; }
+    public int id { get; init; }
+    public int gold { get; init; }
+    public string? items { get; init; }
 }

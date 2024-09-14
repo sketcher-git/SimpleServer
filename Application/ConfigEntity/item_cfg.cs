@@ -4,6 +4,6 @@ namespace Application.ConfigEntity;
 
 internal class item_cfg : IDataEntity
 {
-    public int id { get; set; }
-    public string? name { get; set; }
+    public int id { get; init; }
+    public string? name { get; init; }
 }
