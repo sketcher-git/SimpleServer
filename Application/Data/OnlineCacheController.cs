@@ -4,105 +4,104 @@ using Domain.Players;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Application.Data
+namespace Application.Data;
+
+public class OnlineCacheController
 {
-    public class OnlineCacheController
+    private static readonly Lazy<OnlineCacheController> _instance = new Lazy<OnlineCacheController>(() => new OnlineCacheController());
+
+    private readonly Dictionary<Guid, Dictionary<Guid, Item>> _itemOnlineCacheMap;
+    private readonly Dictionary<Guid, PlayerOnlineCache> _playerOnlineCacheMap;
+
+    public static OnlineCacheController Instance => _instance.Value;
+
+    private OnlineCacheController()
     {
-        private static readonly Lazy<OnlineCacheController> _instance = new Lazy<OnlineCacheController>(() => new OnlineCacheController());
+        _itemOnlineCacheMap = new Dictionary<Guid, Dictionary<Guid, Item>>();
+        _playerOnlineCacheMap = new Dictionary<Guid, PlayerOnlineCache>();
+    }
 
-        private readonly Dictionary<Guid, Dictionary<Guid, Item>> _itemOnlineCacheMap;
-        private readonly Dictionary<Guid, PlayerOnlineCache> _playerOnlineCacheMap;
+    internal Item? GetItemByDataId(Guid playerId, int dataId)
+    {
+        var itemMap = GetItemMapByPlayerId(playerId);
+        if (itemMap == null
+        || itemMap.Count == 0)
+            return null;
 
-        public static OnlineCacheController Instance => _instance.Value;
+        return itemMap.Values
+                    .Where(item => item.DataId == dataId)
+                    .FirstOrDefault();
+    }
 
-        private OnlineCacheController()
-        {
-            _itemOnlineCacheMap = new Dictionary<Guid, Dictionary<Guid, Item>>();
-            _playerOnlineCacheMap = new Dictionary<Guid, PlayerOnlineCache>();
-        }
+    internal Item? GetItemByItemId(Guid playerId, Guid itemId)
+    {
+        var itemMap = GetItemMapByPlayerId(playerId);
+        if (itemMap == null
+        || itemMap.Count == 0)
+            return null;
 
-        internal Item? GetItemByDataId(Guid playerId, int dataId)
-        {
-            var itemMap = GetItemMapByPlayerId(playerId);
-            if (itemMap == null
-            || itemMap.Count == 0)
+        TryGetCacheTableValue(itemMap, itemId, out var item);
+        return item;
+    }
+
+    public Dictionary<Guid, Item>? GetItemMapByPlayerId(Guid playerId)
+    {
+        TryGetCacheTableValue(_itemOnlineCacheMap, playerId, out var itemMap);
+        return itemMap;
+    }
+
+    public PlayerOnlineCache? GetPlayerOnlineCacheByPlayerId(Guid playerId)
+    {
+        TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player);
+        return player;
+    }
+
+    public Player? GetPlayerRecordByPlayerId(Guid playerId)
+    {
+        if(!TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player))
                 return null;
 
-            return itemMap.Values
-                        .Where(item => item.DataId == dataId)
-                        .FirstOrDefault();
-        }
+        return player.Record;
+    }
 
-        internal Item? GetItemByItemId(Guid playerId, Guid itemId)
-        {
-            var itemMap = GetItemMapByPlayerId(playerId);
-            if (itemMap == null
-            || itemMap.Count == 0)
-                return null;
+    public void RegisterItemMap(Guid playerId, Dictionary<Guid, Item> itemMap)
+    {
+        _itemOnlineCacheMap.Add(playerId, itemMap);
+    }
 
-            TryGetCacheTableValue(itemMap, itemId, out var item);
-            return item;
-        }
+    internal void RegisterPlayer(PlayerOnlineCache player)
+    {
+        _playerOnlineCacheMap.Add(player.Id, player);
+    }
 
-        public Dictionary<Guid, Item>? GetItemMapByPlayerId(Guid playerId)
-        {
-            TryGetCacheTableValue(_itemOnlineCacheMap, playerId, out var itemMap);
-            return itemMap;
-        }
+    internal bool RemoveItemByItemId(Guid playerId, Guid itemId)
+    {
+        var itemMap = GetItemMapByPlayerId(playerId);
+        if (itemMap == null
+        || itemMap.Count == 0)
+            return false;
 
-        public PlayerOnlineCache? GetPlayerOnlineCacheByPlayerId(Guid playerId)
-        {
-            TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player);
-            return player;
-        }
+        return itemMap.Remove(itemId);
+    }
 
-        public Player? GetPlayerRecordByPlayerId(Guid playerId)
-        {
-            if(!TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player))
-                    return null;
+    private bool TryGetCacheTableValue<TKey, TValue>(Dictionary<TKey, TValue> collectionTable, TKey key, out TValue value)
+    {
+        value = default(TValue);
+        ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(collectionTable, key);
+        if (Unsafe.IsNullRef(valueOrNull))
+            return false;
 
-            return player.Record;
-        }
+        value = valueOrNull;
+        return true;
+    }
 
-        public void RegisterItemMap(Guid playerId, Dictionary<Guid, Item> itemMap)
-        {
-            _itemOnlineCacheMap.Add(playerId, itemMap);
-        }
+    internal bool UnregisterItemMap(Guid playerId)
+    {
+        return _itemOnlineCacheMap.Remove(playerId);
+    }
 
-        internal void RegisterPlayer(PlayerOnlineCache player)
-        {
-            _playerOnlineCacheMap.Add(player.Id, player);
-        }
-
-        internal bool RemoveItemByItemId(Guid playerId, Guid itemId)
-        {
-            var itemMap = GetItemMapByPlayerId(playerId);
-            if (itemMap == null
-            || itemMap.Count == 0)
-                return false;
-
-            return itemMap.Remove(itemId);
-        }
-
-        private bool TryGetCacheTableValue<TKey, TValue>(Dictionary<TKey, TValue> collectionTable, TKey key, out TValue value)
-        {
-            value = default(TValue);
-            ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(collectionTable, key);
-            if (Unsafe.IsNullRef(valueOrNull))
-                return false;
-
-            value = valueOrNull;
-            return true;
-        }
-
-        internal bool UnregisterItemMap(Guid playerId)
-        {
-            return _itemOnlineCacheMap.Remove(playerId);
-        }
-
-        internal bool UnregisterPlayer(Guid playerId)
-        {
-            return _playerOnlineCacheMap.Remove(playerId);
-        }
+    internal bool UnregisterPlayer(Guid playerId)
+    {
+        return _playerOnlineCacheMap.Remove(playerId);
     }
 }
