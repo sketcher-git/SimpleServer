@@ -23,6 +23,7 @@ public class PlayerOnlineCache
     public string Email { get => _record.Email.Value; }
     public bool IsOnline { get; private set; }
     public long LoginTimestamp { get => _record.LoginTimestamp; }
+    public Guid LogOutDelayEventId { get; private set; }
     public long LogOutTimestamp { get => _record.LogOutTimestamp; }
     public string Name { get => _record.Name.Value; }
 
@@ -34,9 +35,10 @@ public class PlayerOnlineCache
             _playerRepository.Update(_record, nameof(_record.LoginTimestamp));
     }
 
-    public void LogOut()
+    public void LogOut(Guid logOutDelayEventId)
     {
         IsOnline = false;
+        LogOutDelayEventId = logOutDelayEventId;
         _record.LogOutTimestamp = _dateTimeProvider.UtcNow.Ticks;
         _playerRepository.Update(_record, nameof(_record.LogOutTimestamp));
     }

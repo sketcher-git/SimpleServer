@@ -28,7 +28,7 @@ public sealed class LogOutDelayNotificationHandler : INotificationHandler<LogOut
             return;
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        OnlineCacheController.Instance.UnregisterPlayer(notification.playerId);
+        OnlineCacheController.Instance.ClearAllCacheByPlayerId(notification.playerId);
         _api.WriteLog(LogLevelType.Notice, $"LogoutDelayNotification triggered, and player {notification.playerId} logged out.");
     }
 }

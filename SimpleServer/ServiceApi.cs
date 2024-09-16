@@ -33,16 +33,16 @@ public sealed class ServiceApi : IServiceApi
         _network.Enqueue((short)message.ProtocolId, message);
     }
 
-    public void CreateTimeEvent<T>(DateTime deadline, T notation, bool isRecurring = false)
+    public Guid CreateTimeEvent<T>(DateTime deadline, T notation, bool isRecurring = false)
         where T : TimerNotification
     {
-        _timerService.ScheduleEvent(deadline, notation, isRecurring);
+        return _timerService.ScheduleEvent(deadline, notation, isRecurring);
     }
 
-    public void CreateTimeEvent<T>(TimeSpan interval, T notation, bool isRecurring = false)
+    public Guid CreateTimeEvent<T>(TimeSpan interval, T notation, bool isRecurring = false)
         where T : TimerNotification
     {
-        _timerService.ScheduleEvent(interval, notation, isRecurring);
+        return _timerService.ScheduleEvent(interval, notation, isRecurring);
     }
 
     public bool GetDataTable<T>(out Dictionary<int, T> dataTable)
@@ -74,9 +74,9 @@ public sealed class ServiceApi : IServiceApi
         return _random.Next(floor, ceil);
     }
 
-    public void RemoveTimeEvent(Guid eventId)
+    public bool RemoveTimeEvent(Guid eventId)
     {
-        _timerService.RemoveEvent(eventId);
+        return _timerService.RemoveEvent(eventId);
     }
 
     public void Send<T>(Guid playerId, short protocolId, T message)

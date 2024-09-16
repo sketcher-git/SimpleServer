@@ -95,6 +95,12 @@ public class OnlineCacheController
         return true;
     }
 
+    internal void ClearAllCacheByPlayerId(Guid playerId)
+    {
+        _itemOnlineCacheMap.Remove(playerId);
+        _playerOnlineCacheMap.Remove(playerId);
+    }
+
     internal bool UnregisterItemMap(Guid playerId)
     {
         return _itemOnlineCacheMap.Remove(playerId);

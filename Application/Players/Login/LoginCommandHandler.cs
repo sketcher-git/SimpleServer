@@ -17,13 +17,15 @@ internal sealed class LoginCommandHandler
     private readonly ICacheService _cacheService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPlayerRepository _playerRepository;
+    private readonly IServiceApi _api;
     private readonly IUnitOfWork _unitOfWork;
 
-    public LoginCommandHandler(ICacheService cacheService, IDateTimeProvider dateTimeProvider, INotificationQueue notificationQueue, IPlayerRepository playerRepository, IUnitOfWork unitOfWork)
+    public LoginCommandHandler(ICacheService cacheService, IDateTimeProvider dateTimeProvider, INotificationQueue notificationQueue, IPlayerRepository playerRepository, IServiceApi api, IUnitOfWork unitOfWork)
     {
         _cacheService = cacheService;
         _dateTimeProvider = dateTimeProvider;
         _playerRepository = playerRepository;
+        _api = api;
         _unitOfWork = unitOfWork;
     }
 
@@ -43,6 +45,8 @@ internal sealed class LoginCommandHandler
 
             OnlineCacheController.Instance.RegisterPlayer(player = new PlayerOnlineCache(record, _dateTimeProvider, _playerRepository));
         }
+        else
+            _api.RemoveTimeEvent(player.LogOutDelayEventId);
 
         player.Login();
         await _unitOfWork.SaveChangesAsync(cancellationToken);

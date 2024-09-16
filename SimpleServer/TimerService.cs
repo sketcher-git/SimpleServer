@@ -46,20 +46,20 @@ public sealed class TimerService : ITimerService
         }
     }
 
-    public void RemoveEvent(Guid eventId)
+    public bool RemoveEvent(Guid eventId)
     {
-        _events.TryRemove(eventId, out _);
+        return _events.TryRemove(eventId, out _);
     }
 
-    public void ScheduleEvent<T>(DateTime deadline, T notification, bool isRecurring = false)
+    public Guid ScheduleEvent<T>(DateTime deadline, T notification, bool isRecurring = false)
         where T : TimerNotification
     {
         if (deadline <= _dateTimeProvider.UtcNow)
-            return; 
-        ScheduleEvent(deadline - _dateTimeProvider.UtcNow, notification, isRecurring);
+            return Guid.Empty;
+        return ScheduleEvent(deadline - _dateTimeProvider.UtcNow, notification, isRecurring);
     }
 
-    public void ScheduleEvent<T>(TimeSpan interval, T notification, bool isRecurring = false)
+    public Guid ScheduleEvent<T>(TimeSpan interval, T notification, bool isRecurring = false)
         where T : TimerNotification
     {
         var timeEvent = new TimeEvent
@@ -73,6 +73,7 @@ public sealed class TimerService : ITimerService
         Guid eventId = Guid.NewGuid();
         _events[eventId] = timeEvent;
         notification.EventId = eventId;
+        return eventId;
     }
 
     internal void StopService()

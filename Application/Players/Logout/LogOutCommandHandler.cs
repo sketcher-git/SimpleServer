@@ -25,9 +25,8 @@ internal sealed class LogOutCommandHandler : ICommandHandler<LogOutCommand>
         if (player == null)
             return Result.Failure(PlayerErrors.NotFound(command.playerId));
 
-        player.LogOut();
-
-        _api.CreateTimeEvent(TimeSpan.FromMinutes(1), new LogOutDelayNotification(command.playerId));
+        Guid delayEventId = _api.CreateTimeEvent(TimeSpan.FromMinutes(1), new LogOutDelayNotification(command.playerId));
+        player.LogOut(delayEventId);
         return Result.Success();
     }
 }
