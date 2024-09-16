@@ -5,14 +5,14 @@ namespace SimpleServer;
 
 public sealed class NotificationDispatcher
 {
-    private readonly INotificationQueue _notificationQueue;
     private readonly IMediator _mediator;
+    private readonly INotificationQueue _notificationQueue;
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-    public NotificationDispatcher(INotificationQueue notificationQueue, IMediator mediator)
+    public NotificationDispatcher(IMediator mediator, INotificationQueue notificationQueue)
     {
-        _notificationQueue = notificationQueue;
         _mediator = mediator;
+        _notificationQueue = notificationQueue;
     }
 
     private async Task DispatchNotifications(CancellationToken token)

@@ -32,17 +32,20 @@ internal class StressTesting
 
     private async Task CreateClientAndTakeActions(CancellationToken token)
     {
-        foreach (var client in _clientsMap.Values)
+        var clients = _clientsMap.Values.ToArray();
+        int clientCount = clients.Length;
+        for (int i = 0; i < clientCount; i++)
         {
-            client.ConnectAsync();
+            clients[i].ConnectAsync();
         }
 
         while (true)
         {
             try
             {
-                foreach (var client in _clientsMap.Values)
+                for (int i = 0; i < clientCount; i++)
                 {
+                    var client = clients[i];
                     if (!client.IsOnline)
                     {
                         await Task.Delay(10, token);
@@ -73,7 +76,7 @@ internal class StressTesting
                             break;
                     }
 
-                    await Task.Delay(10, token);
+                    await Task.Delay(1, token);
                 }
             }
             catch (Exception e)

@@ -19,14 +19,15 @@ public sealed class ProtocolCommandService : IProtocolCommandService
         var commandTypes = Assembly.GetExecutingAssembly().GetTypes()
             .Where(t => t.GetCustomAttributes(typeof(ProtocolAttribute), false).Length > 0);
 
-        foreach (var type in commandTypes)
+        var spanCommandType = commandTypes.ToArray().AsSpan();
+        int spanLength = spanCommandType.Length;
+        for (int i = 0; i < spanLength; i++)
         {
-            var attribute = (ProtocolAttribute?)type.GetCustomAttributes(typeof(ProtocolAttribute), false)
-                                                                .FirstOrDefault();
+            var attribute = (ProtocolAttribute?)spanCommandType[i]
+                .GetCustomAttributes(typeof(ProtocolAttribute), false)
+                .FirstOrDefault();
             if (attribute != null)
-            {
-                _protocolCommandMap[attribute.ProtocolId] = type;
-            }
+                _protocolCommandMap[attribute.ProtocolId] = spanCommandType[i];
         }
     }
 

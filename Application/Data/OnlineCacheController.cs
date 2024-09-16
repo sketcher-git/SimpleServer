@@ -1,6 +1,8 @@
 ﻿using Application.Data.OnlineData;
 using Domain.Items;
 using Domain.Players;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Application.Data
 {
@@ -38,26 +40,26 @@ namespace Application.Data
             || itemMap.Count == 0)
                 return null;
 
-            itemMap.TryGetValue(itemId, out var item);
+            TryGetCacheTableValue(itemMap, itemId, out var item);
             return item;
         }
 
         public Dictionary<Guid, Item>? GetItemMapByPlayerId(Guid playerId)
         {
-            _itemOnlineCacheMap.TryGetValue(playerId, out var itemMap);
+            TryGetCacheTableValue(_itemOnlineCacheMap, playerId, out var itemMap);
             return itemMap;
         }
 
         public PlayerOnlineCache? GetPlayerOnlineCacheByPlayerId(Guid playerId)
         {
-            _playerOnlineCacheMap.TryGetValue(playerId, out var player);
+            TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player);
             return player;
         }
 
         public Player? GetPlayerRecordByPlayerId(Guid playerId)
         {
-            if(!_playerOnlineCacheMap.TryGetValue(playerId, out var player))
-                return null;
+            if(!TryGetCacheTableValue(_playerOnlineCacheMap, playerId, out var player))
+                    return null;
 
             return player.Record;
         }
@@ -80,6 +82,17 @@ namespace Application.Data
                 return false;
 
             return itemMap.Remove(itemId);
+        }
+
+        private bool TryGetCacheTableValue<TKey, TValue>(Dictionary<TKey, TValue> collectionTable, TKey key, out TValue value)
+        {
+            value = default(TValue);
+            ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(collectionTable, key);
+            if (Unsafe.IsNullRef(valueOrNull))
+                return false;
+
+            value = valueOrNull;
+            return true;
         }
 
         internal bool UnregisterItemMap(Guid playerId)

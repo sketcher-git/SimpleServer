@@ -9,7 +9,6 @@ using SharedKernel;
 using Serilog;
 using Application.Timer;
 using System.Reflection;
-using Application.Abstractions.Data;
 
 namespace SimpleServer;
 

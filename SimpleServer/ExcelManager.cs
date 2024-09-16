@@ -4,6 +4,8 @@ using ClosedXML.Excel;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SimpleServer;
 
@@ -23,13 +25,16 @@ public sealed partial class ExcelManager : IConfigService
         where T : IDataEntity
     {
         dataTable = null;
-        if (!_dataEntityStorage.TryGetValue(typeof(T).Name, out var dataTableObj))
+
+        if (!TryGetValueByKey(_dataEntityStorage, typeof(T).Name, out var dataTableObj))
             return false;
 
         dataTable = new Dictionary<int, T>();
-        foreach (var data in dataTableObj)
+        var spanDataTableObj = dataTableObj.ToArray().AsSpan();
+        int spanLength = spanDataTableObj.Length;
+        for (int i = 0; i < spanLength; i++)
         {
-            dataTable.Add(data.Key, (T)data.Value);
+            dataTable.Add(spanDataTableObj[i].Key, (T)spanDataTableObj[i].Value);
         }
 
         return true;
@@ -38,12 +43,10 @@ public sealed partial class ExcelManager : IConfigService
     public T? GetSingleData<T>(int dataId)
         where T : IDataEntity
     {
-        if (!_dataEntityStorage.TryGetValue(typeof(T).Name, out var dataTableObj))
+        if (!TryGetValueByKey(_dataEntityStorage, typeof(T).Name, out var dataTableObj))
             return default(T);
 
-        if (!dataTableObj.TryGetValue(dataId, out var dataObj))
-            return default(T);
-
+        TryGetValueByKey(dataTableObj, dataId, out var dataObj);
         return (T)dataObj;
     }
 }
@@ -58,13 +61,16 @@ public sealed partial class ExcelManager
 
         var path = _configuration.GetValue<string>("ExcelsPath:Path");
         var files = Directory.GetFiles(path, "*.xlsx");
-        foreach (var file in files)
+        var spanFile = files.AsSpan();
+        int spanFileLength = spanFile.Length;
+        for (int index = 0; index < spanFileLength; index++)
         {
+            var file = spanFile[index];
             using (var workbook = new XLWorkbook(file))
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                if (!dataTypesMap.TryGetValue(fileName, out var dataType)
-                    || !dataPropertiesMap.TryGetValue(fileName, out var dataTypeFields))
+                if (!TryGetValueByKey(dataTypesMap, fileName, out var dataType)
+                || !TryGetValueByKey(dataPropertiesMap, fileName, out var dataTypeFields))
                     continue;
 
                 var dataTable = new Dictionary<int, IDataEntity>();
@@ -72,7 +78,8 @@ public sealed partial class ExcelManager
                 var headerRow = worksheet.FirstRowUsed().CellsUsed();
                 int count = headerRow.Count();
                 dynamic? cellValue = null;
-                foreach (var row in worksheet.RowsUsed().Skip(1))
+                var rows = worksheet.RowsUsed().Skip(1);
+                foreach (var row in rows)
                 {
                     var dataObj = (IDataEntity?)Activator.CreateInstance(dataType);
                     if (dataObj == null)
@@ -101,7 +108,7 @@ public sealed partial class ExcelManager
                         if (cellValue == null)
                             continue;
 
-                        if (dataTypeFields.TryGetValue(header, out var field))
+                        if (TryGetValueByKey(dataTypeFields, header, out var field))
                             field.SetValue(dataObj, cellValue);
                     }
 
@@ -119,6 +126,18 @@ public sealed partial class ExcelManager
         }
     }
 
+    private bool TryGetValueByKey<TKey, TValue>(Dictionary<TKey, TValue> collectionTable, TKey key, out TValue value)
+        where TKey : notnull
+    {
+        value = default(TValue);
+        ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(collectionTable, key);
+        if (Unsafe.IsNullRef(ref valueOrNull))
+            return false;
+
+        value = valueOrNull;
+        return true;
+    }
+
     private bool TryGetDataTypesMapAndDataPropertiesMap(out Dictionary<string, Type> dataTypesMap, out Dictionary<string, Dictionary<string, PropertyInfo>> dataPropertiesMap)
     {
         dataTypesMap = new Dictionary<string, Type>();
@@ -126,15 +145,21 @@ public sealed partial class ExcelManager
         var assembly = Application.AssemblyReference.Assembly;
         var interfaceType = typeof(IDataEntity);
         var dataTypes = assembly
-                                   .GetTypes()
-                                   .Where(t => interfaceType.IsAssignableFrom(t));
+                            .GetTypes()
+                            .Where(t => t != typeof(IDataEntity) && interfaceType.IsAssignableFrom(t));
 
-        foreach (var dt in dataTypes)
+        var spanDataType = dataTypes.ToArray().AsSpan();
+        int spanDataTypeLength = spanDataType.Length;
+        for ( int i = 0; i < spanDataTypeLength; i++)
         {
+            var dt = spanDataType[i];
             var fieldsMap = new Dictionary<string, PropertyInfo>();
-            foreach (var f in dt.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            var properties = dt.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var spanField = properties.AsSpan();
+            int spanPropertyLength = spanField.Length;
+            for ( int j = 0; j < spanPropertyLength; j++ )
             {
-                fieldsMap.Add(f.Name, f);
+                fieldsMap.Add(spanField[j].Name, spanField[j]);
             }
 
             dataPropertiesMap.Add(dt.Name, fieldsMap);
