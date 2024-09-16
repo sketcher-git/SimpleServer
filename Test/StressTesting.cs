@@ -6,7 +6,6 @@ namespace Test;
 
 internal class StressTesting
 {
-    private Thread _logicThread = Thread.CurrentThread;
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
     private int _clientCount = 1024;

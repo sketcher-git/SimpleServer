@@ -49,7 +49,7 @@ internal class StartServer : IHostedService
                 var request = _network.TakeRequest();
                 if (request == null)
                 {
-                    Thread.Sleep(100);
+                    await Task.Delay(100, token);
                     continue;
                 }
 
