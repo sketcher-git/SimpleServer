@@ -19,14 +19,14 @@ internal class ProtocolProcessor
         RegisterMessageTypes();
     }
 
-    internal INotificationProtocol DeserializeMessage(ProtocolId protocolId, byte[] messageBody)
+    internal object? DeserializeMessage(ProtocolId protocolId, byte[] messageBody)
     {
         if (!_responseProtocolMap.TryGetValue(protocolId, out var messageType))
         {
             throw new NotSupportedException($"Unsupported protocol ID: {protocolId}");
         }
 
-        return (INotificationProtocol)MessagePackSerializer.Deserialize(messageType, messageBody);
+        return MessagePackSerializer.Deserialize(messageType, messageBody);
     }
 
     private void RegisterMessageTypes()

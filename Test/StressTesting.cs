@@ -103,10 +103,10 @@ internal class StressTesting
                 continue;
             }
 
-            var response = Tool.UnpackMessage(message.Message);
-            var protocol = response.Result.protocol;
+            var response = await Tool.UnpackMessage(message.Message);
+            var protocol = response.protocol;
             _clientsMap.TryGetValue(message.PlayerIndex, out var client);
-            switch (response.Result.protocolId)
+            switch (response.protocolId)
             {
                 case ProtocolId.Login:
                     client.LoginDone(protocol as LoginResponseProtocol);

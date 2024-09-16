@@ -33,7 +33,7 @@ public class SimpleTcpSession : TcpSession
         NetworkManager.NetworkLog(LogLevelType.Notice, $"Session caught an error with code {error}");
     }
 
-    protected override void OnReceived(byte[] buffer, long offset, long size)
+    protected override async void OnReceived(byte[] buffer, long offset, long size)
     {
         int processedBytes = 0;
         while (processedBytes < size)
@@ -54,7 +54,7 @@ public class SimpleTcpSession : TcpSession
 
             byte[] packedMessage = new byte[messageLength];
             Array.Copy(buffer, (int) offset + NetworkManager.HeaderSize, packedMessage, 0, messageLength);
-            var message = NetworkManager.UnpackMessage(packedMessage);
+            var message = await NetworkManager.UnpackMessage(packedMessage);
             if (message.playerId == Guid.Empty)
             {
                 NetworkManager.NetworkLog(LogLevelType.Notice, "PlayerId is empty!");
@@ -67,6 +67,12 @@ public class SimpleTcpSession : TcpSession
                     _playerId = message.playerId;
                 else 
                     break;
+            }
+
+            if (message.protocol == null)
+            {
+                NetworkManager.NetworkLog(LogLevelType.Error, $"Message with protocolId {message.protocolId.ToString()} has a null protocol!");
+                break;
             }
 
             NetworkManager.Receive(message.playerId, message.protocol);

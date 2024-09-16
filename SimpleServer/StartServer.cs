@@ -20,7 +20,6 @@ internal class StartServer : IHostedService
     private readonly NotificationDispatcher _notificationDispatcher;
     private readonly IProtocolCommandService _protocolCommand;
     private readonly IServiceApi _serviceApi;
-    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
     public StartServer(IConfiguration configuration, IMediator mediator, INetworkService network, NotificationDispatcher notificationDispatcher, IProtocolCommandService protocolCommand, IServiceApi serviceApi)
     {
@@ -34,13 +33,14 @@ internal class StartServer : IHostedService
 
     public Task StartAsync(CancellationToken token)
     {
-        return StartTcpServer(token);
+        return Task.Run(() => StartTcpServer(token));
     }
 
     private async Task StartProcessRequests(CancellationToken token)
     {
         var commandTypeCache = _protocolCommand.GetProtocolCommandMap().ToDictionary();
         var constructorCache = new Dictionary<Type, ConstructorInfo>();
+        Log.Logger.Information("Logic thread started!");
 
         while (_mediator != null)
         {
@@ -119,16 +119,16 @@ internal class StartServer : IHostedService
         }
     }
 
-    private async Task StartTcpServer(CancellationToken token)
+    private void StartTcpServer(CancellationToken token)
     {
         var server = _network.GetTcpServer();
         server.OptionReuseAddress = true;
         Log.Logger.Information("Server starting...");
         server.Start();
-        StartLogicThread();
+        Task.Run(async () => await StartProcessRequests(token));
+        _notificationDispatcher.StartDispatchNotifications();
         Log.Logger.Information("Server started");
 
-        _notificationDispatcher.StartDispatch();
         _serviceApi.CreateTimeEvent(TimeSpan.FromSeconds(5), new HeartbeatNotification(), true);
 
         for (; ; )
@@ -143,15 +143,8 @@ internal class StartServer : IHostedService
         Log.Logger.Information("Done!");
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public Task StopAsync(CancellationToken token)
     {
-        _cts.Cancel();
         return Task.CompletedTask;
-    }
-
-    private void StartLogicThread()
-    {
-        Task.Run(() => StartProcessRequests(_cts.Token));
-        Log.Logger.Information("Logic thread started!");
     }
 }

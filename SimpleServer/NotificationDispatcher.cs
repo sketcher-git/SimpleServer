@@ -30,7 +30,7 @@ public sealed class NotificationDispatcher
         }
     }
 
-    public void StartDispatch()
+    public void StartDispatchNotifications()
     {
         Task.Run(() => DispatchNotifications(_cts.Token));
     }

@@ -49,7 +49,7 @@ internal class Client : TcpClient
         Console.WriteLine($"Test TCP client caught an error with code {error}");
     }
 
-    protected override void OnReceived(byte[] buffer, long offset, long size)
+    protected override async void OnReceived(byte[] buffer, long offset, long size)
     {
         int processedBytes = 0;
         while (processedBytes < size)
@@ -66,9 +66,9 @@ internal class Client : TcpClient
             }
             byte[] packedMessage = new byte[messageLength];
             Array.Copy(buffer, (int)offset + Tool.HeaderSize, packedMessage, 0, messageLength);
-            var response = Tool.UnpackMessage(packedMessage);
-            var protocol = response.Result.protocol;
-            switch (response.Result.protocolId)
+            var response = await Tool.UnpackMessage(packedMessage);
+            var protocol = response.protocol;
+            switch (response.protocolId)
             {
                 case ProtocolId.Login:
                     LoginDone(protocol as LoginResponseProtocol);

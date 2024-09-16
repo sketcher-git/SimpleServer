@@ -19,14 +19,14 @@ internal class ProtocolProcessor
         RegisterRequestProtocolTypes();
     }
 
-    internal IRequestProtocol DeserializeRequestProtocol(ProtocolId protocolId, byte[] messageBody)
+    internal object? DeserializeRequestProtocol(ProtocolId protocolId, byte[] messageBody)
     {
         if (!_requestProtocolMap.TryGetValue(protocolId, out var protocolType))
         {
             throw new NotSupportedException($"Unsupported protocol ID: {protocolId}");
         }
 
-        return (IRequestProtocol)MessagePackSerializer.Deserialize(protocolType, messageBody);
+        return MessagePackSerializer.Deserialize(protocolType, messageBody);
     }
 
     private void RegisterRequestProtocolTypes()
