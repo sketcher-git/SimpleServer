@@ -40,7 +40,7 @@ internal class StartServer : IHostedService
     {
         var commandTypeCache = _protocolCommand.GetProtocolCommandMap().ToDictionary();
         var constructorCache = new Dictionary<Type, ConstructorInfo>();
-        Log.Logger.Information("Logic thread started!");
+        _serviceApi.WriteLog(LogLevelType.Notice, "Logic thread started!");
 
         while (_mediator != null)
         {
@@ -83,7 +83,7 @@ internal class StartServer : IHostedService
                     constructor = commandType.GetConstructor(fieldsType);
                     if (constructor == null)
                     {
-                        Log.Logger.Error($"CommandType {commandType.Name} cannot get constructor!!");
+                        _serviceApi.WriteLog(LogLevelType.Error, $"CommandType {commandType.Name} cannot get constructor!!");
                         continue;
                     }
                     constructorCache[commandType] = constructor;
@@ -107,14 +107,14 @@ internal class StartServer : IHostedService
                 }
                 catch (Exception e)
                 {
-                    Log.Logger.Error(e.Message);
-                    Log.Logger.Error(e.StackTrace);
+                    _serviceApi.WriteLog(LogLevelType.Error, e.Message);
+                    _serviceApi.WriteLog(LogLevelType.Error, e.StackTrace);
                 }
             }
             catch (Exception e)
             {
-                Log.Logger.Error(e.Message);
-                Log.Logger.Error(e.StackTrace);
+                _serviceApi.WriteLog(LogLevelType.Error, e.Message);
+                _serviceApi.WriteLog(LogLevelType.Error, e.StackTrace);
             }
         }
     }
@@ -123,11 +123,11 @@ internal class StartServer : IHostedService
     {
         var server = _network.GetTcpServer();
         server.OptionReuseAddress = true;
-        Log.Logger.Information("Server starting...");
+        _serviceApi.WriteLog(LogLevelType.Notice, "Server starting...");
         server.Start();
-        Task.Run(async () => await StartProcessRequests(token));
+        Task.Factory.StartNew(async () => await StartProcessRequests(token));
         _notificationDispatcher.StartDispatchNotifications();
-        Log.Logger.Information("Server started");
+        _serviceApi.WriteLog(LogLevelType.Notice, "Server started");
 
         _serviceApi.CreateTimeEvent(TimeSpan.FromSeconds(5), new HeartbeatNotification(), true);
 
@@ -138,9 +138,9 @@ internal class StartServer : IHostedService
                 break;
         }
 
-        Log.Logger.Information("Server stopping...");
+        _serviceApi.WriteLog(LogLevelType.Notice, "Server stopping...");
         server.Stop();
-        Log.Logger.Information("Done!");
+        _serviceApi.WriteLog(LogLevelType.Notice, "Done!");
     }
 
     public Task StopAsync(CancellationToken token)

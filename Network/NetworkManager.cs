@@ -81,21 +81,24 @@ public sealed partial class NetworkManager
 
     internal static void NetworkLog(LogLevelType level, string log)
     {
-        string networkLog = $"NETWORKLOG--->{log}<---";
-        switch (level)
+        Task.Run(() =>
         {
-            case LogLevelType.Notice:
-                Log.Logger.Information(networkLog);
-                break;
-            case LogLevelType.Warning:
-                Log.Logger.Warning(networkLog);
-                break;
-            case LogLevelType.Error:
-                Log.Logger.Error(networkLog);
-                break;
-            default:
-                break;
-        }
+            string networkLog = $"NETWORKLOG--->{log}<---";
+            switch (level)
+            {
+                case LogLevelType.Notice:
+                    Log.Logger.Information(networkLog);
+                    break;
+                case LogLevelType.Warning:
+                    Log.Logger.Warning(networkLog);
+                    break;
+                case LogLevelType.Error:
+                    Log.Logger.Error(networkLog);
+                    break;
+                default:
+                    break;
+            }
+        });
     }
 
     private byte[] PackMessage(short protocolId, object protocol, Guid playerId)
@@ -164,7 +167,7 @@ public sealed partial class NetworkManager
 
     private void StartSend()
     {
-        Task.Run(async () =>
+        Task.Factory.StartNew(async () =>
         {
             while (true)
             {

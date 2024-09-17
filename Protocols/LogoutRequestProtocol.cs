@@ -5,7 +5,7 @@ using SharedKernel.Protocols;
 namespace Protocols;
 
 [MessagePackObject]
-public sealed record LogoutRequestProtocol : BaseProtocol, IRequestProtocol
+public sealed record LogOutRequestProtocol : BaseProtocol, IRequestProtocol
 {
     [IgnoreMember]
     public override ProtocolId ProtocolId => ProtocolId.Logout;

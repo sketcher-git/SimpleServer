@@ -22,7 +22,7 @@ public class SimpleTcpSession : TcpSession
         if (_playerId != Guid.Empty)
         {
             NetworkManager.UnregisterPlayerSession(_playerId);
-            NetworkManager.Receive(_playerId, new LogoutRequestProtocol());
+            NetworkManager.Receive(_playerId, new LogOutRequestProtocol());
         }
 
         NetworkManager.NetworkLog(LogLevelType.Notice, $"Client TCP session with Id {Id} and PlayerId {_playerId} disconnected!");

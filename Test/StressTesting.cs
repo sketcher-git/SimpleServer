@@ -130,8 +130,8 @@ internal class StressTesting
 
     internal void StartStressTesting()
     {
-        Task.Run(() => CreateClientAndTakeActions(_cts.Token));
-        Task.Run(() => StartProcess(_cts.Token));
+        Task.Factory.StartNew(() => CreateClientAndTakeActions(_cts.Token));
+        Task.Factory.StartNew(() => StartProcess(_cts.Token));
         Console.WriteLine("StressTesting thread started!");
     }
 
