@@ -14,15 +14,15 @@ public sealed partial class NetworkManager : INetworkService
     private readonly IConfiguration _configuration;
     private readonly SimpleTcpServer _server;
 
-    private volatile bool isServerStarted = false;
+    private volatile bool _isServerStarted = false;
 
     public NetworkManager(IConfiguration configurationm)
     {
         _configuration = configurationm;
         int port = _configuration.GetValue<int>("ServerSettings:Port");
         _server = new SimpleTcpServer(IPAddress.Any, port);
-        _server.OnServerStarted += () => isServerStarted = true;
-        _server.OnServerStopped += () => isServerStarted = false;
+        _server.OnServerStarted += () => _isServerStarted = true;
+        _server.OnServerStopped += () => _isServerStarted = false;
         StartSend();
     }
 
@@ -173,7 +173,7 @@ public sealed partial class NetworkManager
             {
                 try
                 {
-                    if (!isServerStarted)
+                    if (!_isServerStarted)
                     {
                         await Task.Delay(100);
                         continue;
