@@ -74,9 +74,9 @@ public sealed partial class NetworkManager
 
     private static volatile bool _isInService = false;
 
-    private void Broadcast(byte[] buffer)
+    private async Task Broadcast(byte[] buffer)
     {
-        _server.Multicast(buffer);
+        await _server.MulticastAsync(buffer);
     }
 
     internal static void NetworkLog(LogLevelType level, string log)
@@ -201,7 +201,7 @@ public sealed partial class NetworkManager
                             Send(response.PlayerId, buffer);
                             break;
                         case ResponseType.Broadcast:
-                            Broadcast(buffer);
+                            await Broadcast(buffer);
                             break;
                         default:
                             break;

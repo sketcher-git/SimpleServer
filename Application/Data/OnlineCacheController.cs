@@ -28,10 +28,10 @@ public class OnlineCacheController
         || itemMap.Count == 0)
             return null;
 
-        foreach (var item in itemMap.Values)
+        foreach (var item in itemMap)
         {
-            if (item.DataId == dataId)
-                return item;
+            if (item.Value.DataId == dataId)
+                return item.Value;
         }
 
         return null;
