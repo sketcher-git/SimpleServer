@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Network;
 using SharedKernel.Protocols;
 using SharedKernel;
-using Serilog;
 using Application.Timer;
 using System.Reflection;
 
@@ -40,6 +39,7 @@ internal class StartServer : IHostedService
     {
         var commandTypeCache = _protocolCommand.GetProtocolCommandMap().ToDictionary();
         var constructorCache = new Dictionary<Type, ConstructorInfo>();
+        var keyProperties = new List<PropertyInfo>();
         _serviceApi.WriteLog(LogLevelType.Notice, "Logic thread started!");
 
         while (_mediator != null)
@@ -63,17 +63,23 @@ internal class StartServer : IHostedService
                 }
 
                 var properties = protocol.GetType()
-                                                .GetProperties()
-                                                .Where(p => p.GetCustomAttributes(typeof(KeyAttribute), false).Length > 0)
-                                                .ToArray();
-                int length = properties.Length + 1;
-                Type[] fieldsType = new Type[length];
-                object[] values = new object[length];
+                         .GetProperties();
+                keyProperties.Clear();
+                int length = properties.Length;
+                for(int i = 0; i< length; i++)
+                {
+                    if (Attribute.IsDefined(properties[i], typeof(KeyAttribute)))
+                        keyProperties.Add(properties[i]);
+                }
+
+                int count = keyProperties.Count + 1;
+                Type[] fieldsType = new Type[count];
+                object[] values = new object[count];
                 fieldsType[0] = playerId.GetType();
                 values[0] = playerId;
                 for (int i = 0; i < length - 1; i++)
                 {
-                    var p = properties[i];
+                    var p = keyProperties[i];
                     fieldsType[i + 1] = p.PropertyType;
                     values[i + 1] = p.GetValue(protocol);
                 }

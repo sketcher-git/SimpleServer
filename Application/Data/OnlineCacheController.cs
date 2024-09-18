@@ -28,9 +28,13 @@ public class OnlineCacheController
         || itemMap.Count == 0)
             return null;
 
-        return itemMap.Values
-                    .Where(item => item.DataId == dataId)
-                    .FirstOrDefault();
+        foreach (var item in itemMap.Values)
+        {
+            if (item.DataId == dataId)
+                return item;
+        }
+
+        return null;
     }
 
     internal Item? GetItemByItemId(Guid playerId, Guid itemId)

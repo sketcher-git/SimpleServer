@@ -17,7 +17,7 @@ public sealed class ProtocolCommandService : IProtocolCommandService
     private void InitializeProtocolCommandMap()
     {
         var commandTypes = Assembly.GetExecutingAssembly().GetTypes()
-            .Where(t => t.GetCustomAttributes(typeof(ProtocolAttribute), false).Length > 0);
+            .Where(t => Attribute.IsDefined(t, typeof(ProtocolAttribute)));
 
         var spanCommandType = commandTypes.ToArray().AsSpan();
         int spanLength = spanCommandType.Length;
