@@ -1,7 +1,6 @@
 ﻿using Protocols;
 using SharedKernel;
 using SharedKernel.Protocols;
-using System.Collections.ObjectModel;
 using System.Net.Sockets;
 using TcpClient = NetCoreServer.TcpClient;
 
