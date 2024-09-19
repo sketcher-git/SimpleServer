@@ -70,7 +70,8 @@ internal class ClientStress : TcpClient
                 Message = packedMessage
             };
 
-            StressTesting.Enqueue(messageObj);
+            var protocolId = (ProtocolId)BitConverter.ToInt16(packedMessage, 0);
+            StressTesting.Enqueue(messageObj, protocolId);
 
             processedBytes += (Tool.HeaderSize + messageLength);
         }

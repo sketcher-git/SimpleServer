@@ -1,6 +1,7 @@
 ﻿using Protocols;
 using SharedKernel;
 using SharedKernel.Protocols;
+using System.Collections.ObjectModel;
 using System.Net.Sockets;
 using TcpClient = NetCoreServer.TcpClient;
 
@@ -14,7 +15,7 @@ internal class Client : TcpClient
     private long _loginTimestamp;
     private long _serverTimestamp;
 
-    private Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)> _itemMap = new Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)>();
+    private readonly Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)> _itemMap = new Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)>();
 
     public Client(string address, int port) : base(address, port) { }
 
@@ -65,7 +66,7 @@ internal class Client : TcpClient
 
             byte[] packedMessage = new byte[messageLength];
             Array.Copy(buffer, (int)offset + Tool.HeaderSize, packedMessage, 0, messageLength);
-            var response = await Tool.UnpackMessage(packedMessage);
+            var response = Tool.UnpackMessage(packedMessage);
             var protocol = response.protocol;
             switch (response.protocolId)
             {

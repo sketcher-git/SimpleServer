@@ -89,7 +89,7 @@ internal static class Tool
         return deserializedObject;
     }
 
-    internal static async Task<(ProtocolId protocolId, object? protocol, Guid playerId)> UnpackMessage(byte[] packedMessage)
+    internal static (ProtocolId protocolId, object? protocol, Guid playerId) UnpackMessage(byte[] packedMessage)
     {
         var protocolId = (ProtocolId)BitConverter.ToInt16(packedMessage, 0);
 
@@ -97,7 +97,7 @@ internal static class Tool
 
         byte[] messageBody = packedMessage.Skip(ProtocolIdSize).Take(packedMessage.Length - 18).ToArray();
 
-        var protocol = await Task.Run(() => ProtocolProcessor.Instance.DeserializeMessage(protocolId, messageBody));
+        var protocol = ProtocolProcessor.Instance.DeserializeMessage(protocolId, messageBody);
         return (protocolId, protocol, playerId);
     }
 

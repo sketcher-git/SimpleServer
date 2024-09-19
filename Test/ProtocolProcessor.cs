@@ -26,7 +26,17 @@ internal class ProtocolProcessor
             throw new NotSupportedException($"Unsupported protocol ID: {protocolId}");
         }
 
-        return MessagePackSerializer.Deserialize(messageType, messageBody);
+        try
+        {
+            return MessagePackSerializer.Deserialize(messageType, messageBody);
+        }
+        catch (MessagePackSerializationException ex)
+        {
+            Console.WriteLine($"MessagePack serialization error: {ex.Message}");
+            Console.WriteLine($"StackTrace: {ex.StackTrace}");
+        }
+
+        return default;
     }
 
     private void RegisterMessageTypes()

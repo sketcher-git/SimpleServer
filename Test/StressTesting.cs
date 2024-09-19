@@ -8,10 +8,10 @@ internal class StressTesting
 {
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
-    private int _clientCount = 1024;
-    private static ConcurrentDictionary<int, ClientStress> _clientsMap = new ConcurrentDictionary<int, ClientStress>();
+    private const int _clientCount = 1024;
+    private static readonly ConcurrentDictionary<int, ClientStress> _clientsMap = new ConcurrentDictionary<int, ClientStress>();
 
-    private static BlockingCollection<MessageObject> _clientMessageQueue = new BlockingCollection<MessageObject>();
+    private static readonly BlockingCollection<MessageObject> _clientMessageQueue = new BlockingCollection<MessageObject>();
 
     private List<string> chatContentList = new List<string>();
 
@@ -51,7 +51,7 @@ internal class StressTesting
                         continue;
                     }
 
-                    int action = Tool.Rand(7);
+                    int action = Tool.Rand(5);
                     int index = Tool.Rand(chatContentList.Count);
                     switch (action)
                     {
@@ -63,19 +63,16 @@ internal class StressTesting
                             client.Chat(chatContentList[index]);
                             break;
                         case 2:
-                        case 3:
-                        case 4:
-                        case 5:
-                            client.ConsumeItem();
-                            break;
-                        case 6:
                             client.GetPlayerByIdQuery();
                             break;
                         default:
+                            client.ConsumeItem();
                             break;
                     }
 
-                    await Task.Delay(1, token);
+                    //To send 8 times per millisecond
+                    if (i > 0 && (i & 7) == 0)
+                        await Task.Delay(1, token);
                 }
             }
             catch (Exception e)
@@ -86,9 +83,20 @@ internal class StressTesting
         }
     }
 
-    public static void Enqueue(MessageObject message)
+    public static void Enqueue(MessageObject message, ProtocolId protocolId)
     {
-        _clientMessageQueue.Add(message);
+        switch (protocolId)
+        {
+            case ProtocolId.Login:
+            case ProtocolId.CreatePlayer:
+            case ProtocolId.ItemList:
+            case ProtocolId.BuyItem:
+            case ProtocolId.ConsumeItem:
+                _clientMessageQueue.Add(message);
+                break;
+            default:
+                break;
+        }
     }
 
     private async Task StartProcess(CancellationToken token)
@@ -102,8 +110,11 @@ internal class StressTesting
                 continue;
             }
 
-            var response = await Tool.UnpackMessage(message.Message);
+            var response = Tool.UnpackMessage(message.Message);
             var protocol = response.protocol;
+            if (protocol == null)
+                continue;
+
             _clientsMap.TryGetValue(message.PlayerIndex, out var client);
             switch (response.protocolId)
             {
