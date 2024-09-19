@@ -215,7 +215,7 @@ public sealed partial class NetworkManager
         });
     }
 
-    internal static async Task<(ProtocolId protocolId, object? protocol, Guid playerId)> UnpackMessage(byte[] packedMessage)
+    internal static (ProtocolId protocolId, object? protocol, Guid playerId) UnpackMessage(byte[] packedMessage)
     {
         var protocolId = (ProtocolId)BitConverter.ToInt16(packedMessage, 0);
 
@@ -223,7 +223,7 @@ public sealed partial class NetworkManager
 
         byte[] messageBody = packedMessage.Skip(2).Take(packedMessage.Length - 18).ToArray();
 
-        var protocol = await Task.Run(() => ProtocolProcessor.Instance.DeserializeRequestProtocol(protocolId, messageBody));
+        var protocol = ProtocolProcessor.Instance.DeserializeRequestProtocol(protocolId, messageBody);
 
         return (protocolId, protocol, playerId);
     }
