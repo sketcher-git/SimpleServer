@@ -13,7 +13,7 @@ internal class ClientStress : TcpClient
     private Guid _playerId = Guid.Empty;
     private int _index = 0;
 
-    private ConcurrentDictionary<Guid, (Guid, int, int)> _itemMap;
+    private ConcurrentDictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)> _itemMap;
 
     public ClientStress(string address, int port, int index) : base(address, port)
     { 
@@ -88,16 +88,14 @@ internal class ClientStress : TcpClient
 
     public void BuyItemDone(BuyItemResposeProtocol response)
     {
-        Guid itemId = response.Item.Item1;
-        int dataId = response.Item.Item2;
-        int amount = response.Item.Item3;
+        var item = response.Item;
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                _itemMap[response.Item.Item1] = response.Item;
+                _itemMap[item.itemId] = item;
                 break;
             case ErrorType.NotFound:
-                Console.WriteLine($"The item with the Data Id = '{dataId}' was non-existent");
+                Console.WriteLine($"The item with the Data Id = '{item.itemDataId}' was non-existent");
                 break;
             case ErrorType.Validation:
                 Console.WriteLine($"The item records was unloaded");
@@ -143,14 +141,13 @@ internal class ClientStress : TcpClient
 
     public void ConsumeItemDone(ConsumeItemResponseProtocol response)
     {
-        Guid itemId = response.Item.Item1;
-        int dataId = response.Item.Item2;
-        int amount = response.Item.Item3;
+        var item = response.Item;
+        Guid itemId = item.itemId;
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                if(amount > 0)
-                    _itemMap[response.Item.Item1] = response.Item;
+                if(item.itemAmount > 0)
+                    _itemMap[itemId] = response.Item;
                 else
                     _itemMap.TryRemove(itemId, out _);
                 break;
@@ -166,7 +163,7 @@ internal class ClientStress : TcpClient
         }
     }
 
-    private void Create(string email = "")
+    private void Create(string? email = "")
     {
         int index = Tool.Rand(10000);
         int offset = Tool.Rand(10000);
@@ -183,12 +180,12 @@ internal class ClientStress : TcpClient
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Player {_playerId} created");
+                Console.WriteLine($"Player with Id = '{_playerId}' created");
                 ItemListQuery();
                 break;
             case ErrorType.Conflict:
                 Console.WriteLine($"Email or Name is not unique");
-                Create();
+                Create(response.Email);
                 break;
             case ErrorType.Validation:
                 Console.WriteLine($"Email or Name is invalid");
@@ -222,9 +219,10 @@ internal class ClientStress : TcpClient
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                if (response.ItemMap is not null)
+                var itemMap = response.ItemMap;
+                if (itemMap is not null)
                 {
-                    foreach (var item in response.ItemMap)
+                    foreach (var item in itemMap)
                     {
                         _itemMap.TryAdd(item.Key, item.Value);
                     }

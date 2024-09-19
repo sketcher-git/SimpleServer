@@ -14,7 +14,7 @@ internal class Client : TcpClient
     private long _loginTimestamp;
     private long _serverTimestamp;
 
-    private Dictionary<Guid, (Guid, int, int)> _itemMap = new Dictionary<Guid, (Guid, int, int)>();
+    private Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)> _itemMap = new Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)>();
 
     public Client(string address, int port) : base(address, port) { }
 
@@ -61,9 +61,8 @@ internal class Client : TcpClient
 
             int messageLength = BitConverter.ToInt32(buffer, (int)offset + processedBytes);
             if (size - processedBytes - Tool.HeaderSize < messageLength)
-            {
                 break;
-            }
+
             byte[] packedMessage = new byte[messageLength];
             Array.Copy(buffer, (int)offset + Tool.HeaderSize, packedMessage, 0, messageLength);
             var response = await Tool.UnpackMessage(packedMessage);
@@ -122,14 +121,15 @@ internal class Client : TcpClient
 
     private void BuyItemDone(BuyItemResposeProtocol response)
     {
-        Guid itemId = response.Item.Item1;
-        int dataId = response.Item.Item2;
-        int amount = response.Item.Item3;
+        var item = response.Item;
+        Guid itemId = item.itemId;
+        int dataId = item.itemDataId;
+        int amount = item.itemAmount;
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Item {itemId} data id is {dataId}, item count is {amount}");
-                _itemMap[response.Item.Item1] = response.Item;
+                Console.WriteLine($"Item with Id = '{itemId}', data id = '{dataId}', item count = '{amount}'");
+                _itemMap[itemId] = item;
                 break;
             case ErrorType.NotFound:
                 Console.WriteLine($"The item with the Data Id = '{dataId}' was non-existent");
@@ -180,7 +180,7 @@ internal class Client : TcpClient
         if (notification.SenderId == _playerId)
             return;
 
-        Console.WriteLine($"Player {notification.SenderId} sent '{notification.Content}' on channel {notification.Channel.ToString()} at {notification.SendingTime}");
+        Console.WriteLine($"Player with Id = '{notification.SenderId}' sent '{notification.Content}' on channel '{notification.Channel.ToString()}' at '{notification.SendingTime}'");
     }
 
     public void ConsumeItem(int amount = 1)
@@ -195,15 +195,15 @@ internal class Client : TcpClient
 
     private void ConsumeItemDone(ConsumeItemResponseProtocol response)
     {
-        Guid itemId = response.Item.Item1;
-        int dataId = response.Item.Item2;
-        int amount = response.Item.Item3;
+        var item = response.Item;
+        Guid itemId = item.itemId;
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Item {itemId} data id is {dataId}, item count is {amount}");
+                int amount = item.itemAmount;
+                Console.WriteLine($"Item with Id = '{itemId}', data id = '{item.itemDataId}', item count = '{amount}'");
                 if (amount > 0)
-                    _itemMap[response.Item.Item1] = response.Item;
+                    _itemMap[itemId] = item;
                 else
                     _itemMap.Remove(itemId);
                 break;
@@ -239,7 +239,7 @@ internal class Client : TcpClient
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Player {_playerId} created");
+                Console.WriteLine($"Player with Id = '{_playerId}' created");
                 ItemListQuery();
                 break;
             case ErrorType.Conflict:
@@ -268,13 +268,14 @@ internal class Client : TcpClient
 
     private void GetPlayerByIdQueryDone(PlayerInformationResponseProtocol response)
     {
+        Guid playerId = response.PlayerInfo.playerId;
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Player {response.PlayerInfo.Item1} name is {response.PlayerInfo.Item2}, login time is {new DateTime(response.PlayerInfo.Item3)}");
+                Console.WriteLine($"Player {playerId} name is {response.PlayerInfo.playerName}, login time is {new DateTime(response.PlayerInfo.loginTimestamp)}");
                 break;
             case ErrorType.NotFound:
-                Console.WriteLine($"The player with the Id = '{response.PlayerInfo.Item1}' was not found");
+                Console.WriteLine($"The player with the Id = '{playerId}' was not found");
                 break;
             case ErrorType.Conflict:
             case ErrorType.Failure:
@@ -296,12 +297,13 @@ internal class Client : TcpClient
         switch (response.ErrorType)
         {
             case ErrorType.None:
-                Console.WriteLine($"Player {_playerId} items were loaded");
-                if (response.ItemMap == null) break;
-                foreach (var item in response.ItemMap.Values)
+                Console.WriteLine($"Items of Player with Id = '{_playerId}' were loaded");
+                var itemMap = response.ItemMap;
+                if (itemMap == null) break;
+                foreach (var item in itemMap.Values)
                 {
-                    Console.WriteLine($"ItemId = {item.Item1}, itemDataId = {item.Item2}, itemAmount = {item.Item3}");
-                    _itemMap.Add(item.Item1, item);
+                    Console.WriteLine($"ItemId = '{item.itemId}', itemDataId = '{item.itemDataId}', itemAmount = '{item.itemAmount}'");
+                    _itemMap.Add(item.itemId, item);
                 }
                 break;
             case ErrorType.Validation:
@@ -341,11 +343,11 @@ internal class Client : TcpClient
         {
             case ErrorType.None:
                 _loginTimestamp = response.LoginTimestamp;
-                Console.WriteLine($"Client {_playerId} logined and the login timestamp is {_loginTimestamp}");
+                Console.WriteLine($"Player with Id '{_playerId}' logined and the timestamp is '{_loginTimestamp}'");
                 ItemListQuery();
                 break;
             case ErrorType.NotFound:
-                Console.WriteLine($"The player with the Id = '{_playerId}' was not found");
+                Console.WriteLine($"Player with the Id = '{_playerId}' was not found");
                 Create();
                 break;
             case ErrorType.Failure:
@@ -361,7 +363,7 @@ internal class Client : TcpClient
         if (notification.PlayerId == _playerId)
             return;
 
-        Console.WriteLine($"Player {notification.Name} with the Id = '{notification.PlayerId}' was online");
+        Console.WriteLine($"Player '{notification.Name}' with the Id = '{notification.PlayerId}' was online");
     }
 
     private void Send<T>(short protocolId, T request)

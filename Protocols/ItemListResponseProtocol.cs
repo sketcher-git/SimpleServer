@@ -14,5 +14,5 @@ public sealed record ItemListResponseProtocol : BaseProtocol, IResponseProtocol
     public ErrorType ErrorType { get; set; }
 
     [Key(1)]
-    public Dictionary<Guid, (Guid, int, int)>? ItemMap { get; set; }
+    public Dictionary<Guid, (Guid itemId, int itemDataId, int itemAmount)>? ItemMap { get; set; }
 }

@@ -62,6 +62,8 @@ internal sealed class CreatePlayerCommandHandler
             return Result.Failure(PlayerErrors.EmailNotUnique, response);
         }
 
+        response.Email = email.Value;
+
         var nameResult = Name.Create(command.Name);
         if (nameResult.IsFailure)
         {
@@ -75,6 +77,8 @@ internal sealed class CreatePlayerCommandHandler
             response.ErrorType = nameResult.Error.Type;
             return Result.Failure(PlayerErrors.NameNotUnique, response);
         }
+
+        response.Name = name.Value;
 
         record = Player.Create(playerId, email, name, _dateTimeProvider.UtcNow);
         _playerRepository.Insert(record);

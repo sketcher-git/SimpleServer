@@ -14,5 +14,5 @@ public sealed record BuyItemResposeProtocol : BaseProtocol, IResponseProtocol
     public ErrorType ErrorType { get; set; }
 
     [Key(1)]
-    public (Guid, int, int) Item { get; set; }
+    public (Guid itemId, int itemDataId, int itemAmount) Item { get; set; }
 }

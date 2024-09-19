@@ -17,8 +17,8 @@ public sealed record PlayerCreateResponseProtocol : BaseProtocol, IResponseProto
     public Guid PlayerId { get; set; }
 
     [Key(2)]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     [Key(3)]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

@@ -14,5 +14,5 @@ public sealed record PlayerInformationResponseProtocol : BaseProtocol, IResponse
     public ErrorType ErrorType { get; set; }
 
     [Key(1)]
-    public (Guid, string, long) PlayerInfo { get; set; }
+    public (Guid playerId, string playerName, long loginTimestamp) PlayerInfo { get; set; }
 }
