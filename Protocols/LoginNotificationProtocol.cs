@@ -14,5 +14,5 @@ public sealed record LoginNotificationProtocol : BaseProtocol, INotificationProt
     public Guid PlayerId { get; set; }
 
     [Key(1)]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

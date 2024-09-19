@@ -40,7 +40,7 @@ public class SimpleTcpSession : TcpSession
         {
             if (size - processedBytes < NetworkManager.HeaderSize)
             {
-                NetworkManager.NetworkLog(LogLevelType.Notice, "Received zero head!");
+                NetworkManager.NetworkLog(LogLevelType.Error, "Received zero head!");
                 throw new Exception("Received zero head");
             }
 
