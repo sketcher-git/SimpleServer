@@ -35,9 +35,6 @@ public sealed partial class NetworkManager : INetworkService
     public void Enqueue<T>(Guid playerId, short protocolId, T message, ResponseType responseType = ResponseType.Common)
         where T : INotificationProtocol
     {
-        if (!_isInService)
-            return;
-
         var response = new ResponseInfomation
         {
             PlayerId = playerId,
@@ -72,8 +69,6 @@ public sealed partial class NetworkManager
     private static readonly ConcurrentDictionary<Guid, SimpleTcpSession> _PlayerSessionMap = new ConcurrentDictionary<Guid, SimpleTcpSession>();
     private static readonly BlockingCollection<RequestInfomation> _requestsQueue = new BlockingCollection<RequestInfomation>();
 
-    private static volatile bool _isInService = false;
-
     private async Task Broadcast(byte[] buffer)
     {
         await _server.MulticastAsync(buffer);
@@ -81,24 +76,21 @@ public sealed partial class NetworkManager
 
     internal static void NetworkLog(LogLevelType level, string log)
     {
-        Task.Run(() =>
+        string networkLog = $"NETWORKLOG--->{log}<---";
+        switch (level)
         {
-            string networkLog = $"NETWORKLOG--->{log}<---";
-            switch (level)
-            {
-                case LogLevelType.Notice:
-                    Log.Logger.Information(networkLog);
-                    break;
-                case LogLevelType.Warning:
-                    Log.Logger.Warning(networkLog);
-                    break;
-                case LogLevelType.Error:
-                    Log.Logger.Error(networkLog);
-                    break;
-                default:
-                    break;
-            }
-        });
+            case LogLevelType.Notice:
+                Log.Logger.Information(networkLog);
+                break;
+            case LogLevelType.Warning:
+                Log.Logger.Warning(networkLog);
+                break;
+            case LogLevelType.Error:
+                Log.Logger.Error(networkLog);
+                break;
+            default:
+                break;
+        }
     }
 
     private byte[] PackMessage(short protocolId, object protocol, Guid playerId)
@@ -150,8 +142,6 @@ public sealed partial class NetworkManager
 
         if (!(isDone = _PlayerSessionMap.TryAdd(playerId, session)))
             NetworkLog(LogLevelType.Error, $"Cannot add the session to player {playerId}!");
-        else
-            _isInService = true;
 
         return isDone;
     }
@@ -180,12 +170,6 @@ public sealed partial class NetworkManager
                     }
 
                     if (!_responsesQueue.TryTake(out var response))
-                    {
-                        await Task.Delay(100);
-                        continue;
-                    }
-
-                    if (!_isInService)
                     {
                         await Task.Delay(100);
                         continue;
@@ -230,10 +214,6 @@ public sealed partial class NetworkManager
 
     internal static bool UnregisterPlayerSession(Guid playerId)
     {
-        bool isDone = false;
-        if (isDone = _PlayerSessionMap.TryRemove(playerId, out _))
-            _isInService = !_PlayerSessionMap.IsEmpty;
-
-        return isDone;
+        return _PlayerSessionMap.TryRemove(playerId, out _);
     }
 }

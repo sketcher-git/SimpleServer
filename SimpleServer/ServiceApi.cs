@@ -87,22 +87,19 @@ public sealed class ServiceApi : IServiceApi
 
     public void WriteLog(LogLevelType level, string log)
     {
-        Task.Run(() =>
+        switch (level)
         {
-            switch (level)
-            {
-                case LogLevelType.Notice:
-                    _logger.Information(log);
-                    break;
-                case LogLevelType.Warning:
-                    _logger.Warning(log);
-                    break;
-                case LogLevelType.Error:
-                    _logger.Error(log);
-                    break;
-                default:
-                    break;
-            }
-        });
+            case LogLevelType.Notice:
+                _logger.Information(log);
+                break;
+            case LogLevelType.Warning:
+                _logger.Warning(log);
+                break;
+            case LogLevelType.Error:
+                _logger.Error(log);
+                break;
+            default:
+                break;
+        }
     }
 }
