@@ -1,7 +1,8 @@
 ﻿using MessagePack;
 using SharedKernel;
 using SharedKernel.Protocols;
-using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Network;
 
@@ -9,19 +10,19 @@ internal class ProtocolProcessor
 {
     private static readonly Lazy<ProtocolProcessor> _instance = new Lazy<ProtocolProcessor>(() => new ProtocolProcessor());
 
-    private readonly ConcurrentDictionary<ProtocolId, Type> _requestProtocolMap;
+    private readonly Dictionary<ProtocolId, Type> _requestProtocolMap;
 
     internal static ProtocolProcessor Instance => _instance.Value;
 
     private ProtocolProcessor()
     {
-        _requestProtocolMap = new ConcurrentDictionary<ProtocolId, Type>();
+        _requestProtocolMap = new Dictionary<ProtocolId, Type>();
         RegisterRequestProtocolTypes();
     }
 
     internal object? DeserializeRequestProtocol(ProtocolId protocolId, byte[] messageBody)
     {
-        if (!_requestProtocolMap.TryGetValue(protocolId, out var protocolType))
+        if (!TryGetProtocolTypeValue(protocolId, out var protocolType))
         {
             throw new NotSupportedException($"Unsupported protocol ID: {protocolId}");
         }
@@ -46,5 +47,16 @@ internal class ProtocolProcessor
             if(instance != null)
                 _requestProtocolMap[instance.ProtocolId] = type;
         }
+    }
+
+    private bool TryGetProtocolTypeValue(ProtocolId protocolId, out Type value)
+    {
+        value = default;
+        ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(_requestProtocolMap, protocolId);
+        if (Unsafe.IsNullRef(valueOrNull))
+            return false;
+
+        value = valueOrNull;
+        return true;
     }
 }

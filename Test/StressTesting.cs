@@ -9,6 +9,7 @@ internal class StressTesting
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
     private const int _clientCount = 1024;
+    private const int _actionsPerGroup = 8;
     private static readonly ConcurrentDictionary<int, ClientStress> _clientsMap = new ConcurrentDictionary<int, ClientStress>();
 
     private static readonly BlockingCollection<MessageObject> _clientMessageQueue = new BlockingCollection<MessageObject>();
@@ -32,47 +33,23 @@ internal class StressTesting
     private async Task CreateClientAndTakeActions(CancellationToken token)
     {
         var clients = _clientsMap.Values.ToArray();
-        int clientCount = clients.Length;
-        for (int i = 0; i < clientCount; i++)
+        for (int i = 0; i < _clientCount; i++)
         {
             clients[i].ConnectAsync();
         }
 
+        int batches = _clientCount / _actionsPerGroup;
+        int remain = _clientCount % _actionsPerGroup;
         while (true)
         {
             try
             {
-                for (int i = 0; i < clientCount; i++)
+                await ExecuteAction(clients, 0, remain, token);
+
+                for (int i = remain; i <= batches; i += _actionsPerGroup)
                 {
-                    var client = clients[i];
-                    if (!client.IsOnline)
-                    {
-                        await Task.Delay(10, token);
-                        continue;
-                    }
-
-                    int action = Tool.Rand(5);
-                    int index = Tool.Rand(chatContentList.Count);
-                    switch (action)
-                    {
-                        case 0:
-                            int dataId = Tool.Rand(3) + 1;
-                            client.BuyItem(dataId);
-                            break;
-                        case 1:
-                            client.Chat(chatContentList[index]);
-                            break;
-                        case 2:
-                            client.GetPlayerByIdQuery();
-                            break;
-                        default:
-                            client.ConsumeItem();
-                            break;
-                    }
-
-                    //To send 8 times per millisecond
-                    if (i > 0 && (i & 7) == 0)
-                        await Task.Delay(1, token);
+                    await ExecuteAction(clients, i, _actionsPerGroup, token);
+                    await Task.Delay(1, token);
                 }
             }
             catch (Exception e)
@@ -96,6 +73,38 @@ internal class StressTesting
                 break;
             default:
                 break;
+        }
+    }
+
+    private async Task ExecuteAction(ClientStress[] clients, int currentIndex, int loop, CancellationToken token)
+    {
+        for (int i = currentIndex; i < loop; i++)
+        {
+            var client = clients[i];
+            if (!client.IsOnline)
+            {
+                await Task.Delay(10, token);
+                return;
+            }
+
+            int action = Tool.Rand(5);
+            int index = Tool.Rand(chatContentList.Count);
+            switch (action)
+            {
+                case 0:
+                    int dataId = Tool.Rand(3) + 1;
+                    client.BuyItem(dataId);
+                    break;
+                case 1:
+                    client.Chat(chatContentList[index]);
+                    break;
+                case 2:
+                    client.GetPlayerByIdQuery();
+                    break;
+                default:
+                    client.ConsumeItem();
+                    break;
+            }
         }
     }
 

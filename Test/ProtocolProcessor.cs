@@ -1,7 +1,8 @@
 ﻿using MessagePack;
 using SharedKernel;
 using SharedKernel.Protocols;
-using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Test;
 
@@ -9,19 +10,19 @@ internal class ProtocolProcessor
 {
     private static readonly Lazy<ProtocolProcessor> _instance = new Lazy<ProtocolProcessor>(() => new ProtocolProcessor());
 
-    private readonly ConcurrentDictionary<ProtocolId, Type> _responseProtocolMap;
+    private readonly Dictionary<ProtocolId, Type> _responseProtocolMap;
 
     internal static ProtocolProcessor Instance => _instance.Value;
 
     private ProtocolProcessor()
     {
-        _responseProtocolMap = new ConcurrentDictionary<ProtocolId, Type>();
+        _responseProtocolMap = new Dictionary<ProtocolId, Type>();
         RegisterMessageTypes();
     }
 
     internal object? DeserializeMessage(ProtocolId protocolId, byte[] messageBody)
     {
-        if (!_responseProtocolMap.TryGetValue(protocolId, out var messageType))
+        if (!TryGetProtocolTypeValue(protocolId, out var messageType))
         {
             throw new NotSupportedException($"Unsupported protocol ID: {protocolId}");
         }
@@ -54,5 +55,16 @@ internal class ProtocolProcessor
             var instance = (BaseProtocol?)Activator.CreateInstance(type);
             _responseProtocolMap[instance.ProtocolId] = type;
         }
+    }
+
+    private bool TryGetProtocolTypeValue(ProtocolId protocolId, out Type value)
+    {
+        value = default;
+        ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(_responseProtocolMap, protocolId);
+        if (Unsafe.IsNullRef(valueOrNull))
+            return false;
+
+        value = valueOrNull;
+        return true;
     }
 }
