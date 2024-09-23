@@ -40,8 +40,10 @@ public class SimpleTcpSession : TcpSession
         {
             if (size - processedBytes < NetworkManager.HeaderSize)
             {
-                NetworkManager.NetworkLog(LogLevelType.Error, "Received zero head!");
-                throw new Exception("Received zero head");
+                AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+                {
+                    NetworkManager.NetworkLog(LogLevelType.Error, "Received zero head!");
+                };
             }
 
             int messageLength = BitConverter.ToInt32(buffer, (int)offset + processedBytes);
@@ -57,8 +59,11 @@ public class SimpleTcpSession : TcpSession
             var message = NetworkManager.UnpackMessage(packedMessage);
             if (message.playerId == Guid.Empty)
             {
-                NetworkManager.NetworkLog(LogLevelType.Notice, "PlayerId is empty!");
-                throw new Exception("PlayerId is empty!");
+                Disconnect();
+                AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+                {
+                    NetworkManager.NetworkLog(LogLevelType.Error, "PlayerId is empty!");
+                };
             }
 
             if (message.protocolId == ProtocolId.Login)
