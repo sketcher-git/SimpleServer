@@ -89,6 +89,7 @@ public class OnlineCacheController
     }
 
     private bool TryGetCacheTableValue<TKey, TValue>(Dictionary<TKey, TValue> collectionTable, TKey key, out TValue value)
+        where TKey : notnull
     {
         value = default(TValue);
         ref var valueOrNull = ref CollectionsMarshal.GetValueRefOrNullRef(collectionTable, key);
