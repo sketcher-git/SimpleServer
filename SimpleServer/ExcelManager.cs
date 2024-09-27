@@ -59,7 +59,7 @@ public sealed partial class ExcelManager
     {
         TryGetDataTypesMapAndDataPropertiesMap(out var dataTypesMap, out var dataPropertiesMap);
 
-        var path = _configuration.GetValue<string>("ExcelsPath:Path");
+        var path = $"{AppDomain.CurrentDomain.BaseDirectory}{_configuration.GetValue<string>("ExcelsPath:Path")}";
         var files = Directory.GetFiles(path, "*.xlsx");
         var spanFile = files.AsSpan();
         int spanFileLength = spanFile.Length;
