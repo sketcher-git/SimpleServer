@@ -17,8 +17,11 @@ public sealed record ChatNotificationProtocol : BaseProtocol, INotificationProto
     public ChatType Channel { get; set; }
 
     [Key(2)]
-    public string Content { get; set; }
+    public string SenderName { get; set; }
 
     [Key(3)]
+    public string Content { get; set; }
+
+    [Key(4)]
     public DateTime SendingTime { get; set; }
 }

@@ -43,7 +43,7 @@ internal sealed class GetItemListQueryHandler(ApplicationReadDbContext dbContext
             }
         }
 
-        notificationQueue.Enqueue(new LoginNotification(playerId, player.Name));
+        await notificationQueue.Enqueue(new LoginNotification(playerId, player.Name));
         return response;
     }
 }
